@@ -23,6 +23,8 @@ func TestMain(m *testing.M) {
 	insertSeat(2, 1, "A1", "AVAILABLE")
 	inserUser(3, "AJitama")
 
+	db.Exec("DELETE FROM bookings")
+
 	exitCode := m.Run()
 	db.Close()
 	os.Exit(exitCode)
@@ -46,22 +48,74 @@ func inserUser(id int, name string) {
 	helper.PanicIfError(err)
 }
 
+func commitOrRollback(t *testing.T, tx *sql.Tx) {
+	r := recover()
+	if r != nil {
+		tx.Rollback()
+		t.Errorf("panic: %v", r)
+	} else {
+		tx.Commit()
+	}
+}
+
 func TestGetSeatStatus(t *testing.T) {
 	repo := NewBookingRepository()
 	ctx := context.Background()
 	tx, err := db.BeginTx(ctx, nil)
 	assert.NoError(t, err)
 
-	defer func() {
-		r := recover()
-		if r != nil {
-			tx.Rollback()
-			t.Errorf("panic: %v", r)
-		} else {
-			tx.Commit()
-		}
-	}()
+	defer commitOrRollback(t, tx)
 
 	status := repo.GetSeatStatus(ctx, tx, 2)
 	assert.Equal(t, "AVAILABLE", status)
+}
+
+func TestMarkSeatAsBooked(t *testing.T) {
+	repo := NewBookingRepository()
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	assert.NoError(t, err)
+
+	defer commitOrRollback(t, tx)
+
+	repo.MarkSeatAsBooked(ctx, tx, 2)
+
+	status := repo.GetSeatStatus(ctx, tx, 2)
+	assert.Equal(t, "BOOKED", status)
+}
+
+func TestDecrementEventQuota(t *testing.T) {
+	repo := NewBookingRepository()
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	assert.NoError(t, err)
+
+	defer commitOrRollback(t, tx)
+
+	repo.DecrementEventQuota(ctx, tx, 1)
+
+	var quota int
+	SQL := "SELECT quota FROM events WHERE id = ?"
+	err = tx.QueryRowContext(ctx, SQL, 1).Scan(&quota)
+	assert.NoError(t, err)
+	assert.Equal(t, 99, quota)
+}
+
+func TestInserBooking(t *testing.T) {
+	repo := NewBookingRepository()
+	ctx := context.Background()
+	tx, err := db.BeginTx(ctx, nil)
+	assert.NoError(t, err)
+
+	defer commitOrRollback(t, tx)
+
+	repo.InsertBooking(ctx, tx, 10, 1, 2, 3)
+
+	var eventId, seatId, userId int
+	SQL := "SELECT event_id, seat_id, user_id FROM bookings WHERE id = ?"
+	err = tx.QueryRowContext(ctx, SQL, 10).Scan(&eventId, &seatId, &userId)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, eventId)
+	assert.Equal(t, 2, seatId)
+	assert.Equal(t, 3, userId)
 }
