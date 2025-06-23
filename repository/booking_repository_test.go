@@ -109,11 +109,11 @@ func TestInserBooking(t *testing.T) {
 
 	defer commitOrRollback(t, tx)
 
-	repo.InsertBooking(ctx, tx, 10, 1, 2, 3)
+	id := repo.InsertBooking(ctx, tx, 1, 2, 3)
 
 	var eventId, seatId, userId int
 	SQL := "SELECT event_id, seat_id, user_id FROM bookings WHERE id = ?"
-	err = tx.QueryRowContext(ctx, SQL, 10).Scan(&eventId, &seatId, &userId)
+	err = tx.QueryRowContext(ctx, SQL, id).Scan(&eventId, &seatId, &userId)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, eventId)
 	assert.Equal(t, 2, seatId)

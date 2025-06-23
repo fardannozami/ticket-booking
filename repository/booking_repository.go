@@ -11,7 +11,7 @@ type BookingRepository interface {
 	GetSeatStatus(ctx context.Context, tx *sql.Tx, seatId int) string
 	MarkSeatAsBooked(ctx context.Context, tx *sql.Tx, seatId int)
 	DecrementEventQuota(ctx context.Context, tx *sql.Tx, eventId int)
-	InsertBooking(ctx context.Context, tx *sql.Tx, id, eventId, seatId, userId int)
+	InsertBooking(ctx context.Context, tx *sql.Tx, eventId, seatId, userId int) int
 }
 
 type bookingRepository struct{}
@@ -41,8 +41,13 @@ func (repo *bookingRepository) DecrementEventQuota(ctx context.Context, tx *sql.
 	helper.PanicIfError(err)
 }
 
-func (repo *bookingRepository) InsertBooking(ctx context.Context, tx *sql.Tx, id int, eventId int, seatId int, userId int) {
-	SQL := "INSERT INTO bookings (id, event_id, seat_id, user_id) VALUES (?, ?, ?, ?)"
-	_, err := tx.ExecContext(ctx, SQL, id, eventId, seatId, userId)
+func (repo *bookingRepository) InsertBooking(ctx context.Context, tx *sql.Tx, eventId int, seatId int, userId int) int {
+	SQL := "INSERT INTO bookings (event_id, seat_id, user_id) VALUES (?, ?, ?)"
+	result, err := tx.ExecContext(ctx, SQL, eventId, seatId, userId)
 	helper.PanicIfError(err)
+
+	id, err := result.LastInsertId()
+	helper.PanicIfError(err)
+
+	return int(id)
 }
