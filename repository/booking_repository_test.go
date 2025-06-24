@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/fardannozami/ticket-booking/app"
 	"github.com/fardannozami/ticket-booking/helper"
 	"github.com/stretchr/testify/assert"
 
@@ -15,9 +16,7 @@ import (
 var db *sql.DB
 
 func TestMain(m *testing.M) {
-	var err error
-	db, err = sql.Open("mysql", "root@tcp(127.0.0.1:3306)/ticket-booking")
-	helper.PanicIfError(err)
+	db = app.NewSqlDb()
 
 	insertEvent(1, 100, "Event 1")
 	insertSeat(2, 1, "A1", "AVAILABLE")
