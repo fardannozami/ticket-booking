@@ -22,7 +22,7 @@ func NewBookingRepository() BookingRepository {
 
 func (repo *bookingRepository) GetSeatStatus(ctx context.Context, tx *sql.Tx, seatId int) string {
 	var status string
-	SQL := "SELECT status FROM seats WHERE id = ?"
+	SQL := "SELECT status FROM seats WHERE id = ? FOR UPDATE"
 	err := tx.QueryRowContext(ctx, SQL, seatId).Scan(&status)
 	helper.PanicIfError(err)
 
