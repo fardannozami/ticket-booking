@@ -25,8 +25,6 @@ func TestMain(m *testing.M) {
 	insertSeat(2, 1, "A1", "AVAILABLE")
 	inserUser(3, "AJitama")
 
-	db.Exec("DELETE FROM bookings")
-
 	exitCode := m.Run()
 	db.Close()
 	os.Exit(exitCode)
@@ -50,7 +48,21 @@ func inserUser(id int, name string) {
 	helper.PanicIfError(err)
 }
 
+func resetDatabase() {
+	db.Exec("DELETE FROM bookings")
+	db.Exec("UPDATE seats SET status = 'AVAILABLE' WHERE id = 2")
+}
+
+type faultyRepository struct {
+	repository.BookingRepository
+}
+
+func (f *faultyRepository) GetSeatStatus(ctx context.Context, tx *sql.Tx, seatId int) string {
+	panic("terjadi panic")
+}
+
 func TestBookSeat(t *testing.T) {
+	resetDatabase()
 	repo := repository.NewBookingRepository()
 	service := NewBookingService(db, repo)
 	ctx := context.Background()
@@ -67,7 +79,24 @@ func TestBookSeat(t *testing.T) {
 	assert.Equal(t, 3, userId)
 }
 
+func TestBookSeatPAnic(t *testing.T) {
+	resetDatabase()
+	repo := &faultyRepository{repository.NewBookingRepository()}
+	service := NewBookingService(db, repo)
+	ctx := context.Background()
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			assert.Equal(t, "terjadi panic", r)
+		}
+	}()
+
+	service.BookSeat(ctx, 1, 2, 3)
+}
+
 func TestBookSeatRaceCondition(t *testing.T) {
+	resetDatabase()
 	repo := repository.NewBookingRepository()
 	service := NewBookingService(db, repo)
 	ctx := context.Background()
@@ -103,12 +132,12 @@ func TestBookSeatRaceCondition(t *testing.T) {
 	for res := range result {
 		if res.error == nil {
 			succesUsers = append(succesUsers, res.userId)
-			fmt.Printf("[SUCCESS] user %d berhasil booking\n", res.userId)
+			// fmt.Printf("[SUCCESS] user %d berhasil booking\n", res.userId)
 		} else {
-			fmt.Printf("[FAILED] user %d gagal booking dengan error %v\n", res.userId, res.error)
+			// fmt.Printf("[FAILED] user %d gagal booking dengan error %v\n", res.userId, res.error)
 		}
 	}
 
 	assert.Equal(t, 1, len(succesUsers))
-	fmt.Printf("jumlah user yang berhasil booking: %d", len(succesUsers))
+	// fmt.Printf("jumlah user yang berhasil booking: %d", len(succesUsers))
 }
