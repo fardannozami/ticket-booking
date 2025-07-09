@@ -1,0 +1,74 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/api/book-seat": {
+            "post": {
+                "description": "Booking Seat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "booking"
+                ],
+                "summary": "Booking Seat",
+                "parameters": [
+                    {
+                        "description": "body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.BookingCreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.CreatedResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "request.BookingCreateRequest": {
+            "type": "object",
+            "properties": {
+                "event_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "seat_id": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 14
+                }
+            }
+        },
+        "response.CreatedResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 201
+                },
+                "message": {
+                    "type": "string",
+                    "example": "created"
+                }
+            }
+        }
+    }
+}

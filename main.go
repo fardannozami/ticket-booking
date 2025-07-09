@@ -10,9 +10,17 @@ import (
 	"github.com/fardannozami/ticket-booking/repository"
 	"github.com/fardannozami/ticket-booking/service"
 	"github.com/julienschmidt/httprouter"
+	httpSwagger "github.com/swaggo/http-swagger"
 
+	_ "github.com/fardannozami/ticket-booking/docs"
 	_ "github.com/go-sql-driver/mysql"
 )
+
+func adaptHandler(h http.Handler) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		h.ServeHTTP(w, r)
+	}
+}
 
 func main() {
 	db := app.NewSqlDb()
@@ -23,6 +31,7 @@ func main() {
 
 	router := httprouter.New()
 
+	router.GET("/documentation/*any", adaptHandler(httpSwagger.WrapHandler))
 	router.POST("/api/book-seat", bookingController.BookSeat)
 
 	router.PanicHandler = exception.PanicHandler

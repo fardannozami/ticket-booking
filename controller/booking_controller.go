@@ -26,6 +26,15 @@ func NewBookingController(service service.BookingService) BookingController {
 	}
 }
 
+// BookSeat godoc
+// @Summary      Booking Seat
+// @Description  Booking Seat
+// @Tags         booking
+// @Accept       json
+// @Produce      json
+// @Param        request   body      request.BookingCreateRequest  true  "body"
+// @Success      201  {object}  response.CreatedResponse
+// @Router       /api/book-seat [post]
 func (c *bookingController) BookSeat(writer http.ResponseWriter, req *http.Request, params httprouter.Params) {
 	var bookingRequest request.BookingCreateRequest
 	err := json.NewDecoder(req.Body).Decode(&bookingRequest)

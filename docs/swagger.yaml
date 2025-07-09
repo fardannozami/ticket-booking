@@ -1,0 +1,48 @@
+definitions:
+  request.BookingCreateRequest:
+    properties:
+      event_id:
+        example: 1
+        type: integer
+      seat_id:
+        example: 2
+        type: integer
+      user_id:
+        example: 14
+        type: integer
+    type: object
+  response.CreatedResponse:
+    properties:
+      code:
+        example: 201
+        type: integer
+      message:
+        example: created
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/book-seat:
+    post:
+      consumes:
+      - application/json
+      description: Booking Seat
+      parameters:
+      - description: body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.BookingCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CreatedResponse'
+      summary: Booking Seat
+      tags:
+      - booking
+swagger: "2.0"
